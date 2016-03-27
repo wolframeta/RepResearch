@@ -1,0 +1,60 @@
+---
+title: 'RepResearch: Course Project 2 - Storm Data Analysis'
+output: html_document
+---
+
+## R Markdown
+
+This is my submission for the 2nd course project for the Reproducible Research course in Coursera. In this project, I have analysed the storm data to infer fatalities, injuries and economic damage.
+
+This first chunk covers the data extraction, manipulation and plot creation part of the exercise. The subsequent chunks will present the plots created in this code chunk.
+
+```{r Data_Extraction, echo=TRUE}
+
+library(ggplot2)
+library(gridExtra)
+stormdata <- read.csv("/Users/wolfram/Downloads/repdata-data-StormData.csv", header = TRUE, sep = ',')
+
+df <- data.frame(stormdata)
+
+fatalities <- aggregate(df$FATALITIES,by = list(df$EVTYPE), FUN = sum)
+injuries <- aggregate(df$INJURIES, by = list(df$EVTYPE), FUN = sum)
+
+cropdmg <- aggregate(df$CROPDMG, by = list(df$EVTYPE), FUN = sum)
+prpdmg <- aggregate(df$PROPDMG, by = list(df$EVTYPE), FUN = sum)
+ecodmg <- aggregate(df$CROPDMG+df$PROPDMG, by = list(df$EVTYPE), FUN = sum)
+
+fat_df <- data.frame(fatalities)
+inj_df <- data.frame(injuries)
+eco_df <- data.frame(ecodmg)
+
+colnames(fatalities) <- c("evtype","sum")
+colnames(injuries) <- c("evtype", "sum")
+colnames(eco_df) <- c("evtype", "sum")
+
+fatalities <- fatalities[with(fatalities, order(-sum)),]
+injuries <- injuries[with(injuries, order(-sum)),]
+ecodamage <- eco_df[with(eco_df, order(-sum)),]
+
+top_fat <- fatalities[1:20,]
+top_inj <- injuries[1:20,]
+
+```
+
+Plot for Injuries and Fatalities caused by the Top 20 Event Types
+
+```{r Plot_1, echo= TRUE, fig.height= 20, fig.width= 30}
+fats <- ggplot(top_fat, aes(evtype,y = count, color = variable)) + geom_point(aes(y = sum, col = "sum")) + theme(axis.text.x=element_text(angle=60, hjust =1))+ggtitle("Top Fatality Factors in the Country") 
+
+injs <- ggplot(top_inj, aes(evtype,y = count, color = variable)) + geom_point(aes(y = sum, col = "sum")) + theme(axis.text.x=element_text(angle=60, hjust =1))+ggtitle("Top Injury Factors in the Country")
+
+grid.arrange(fats, injs, ncol = 1)
+```
+
+Plot for Economic Damages caused by the top 20 Event Types
+
+``` {r Plot_2, echo= TRUE}
+ecods <- ggplot(ecodamage[1:20,], aes(evtype, y = Amount, color = variable)) + geom_point(aes(y = sum/1000000, col = "sum")) + theme(axis.text.x=element_text(angle=60, hjust =1))+ggtitle("Top Economic Damage Contributors")
+
+ecods
+```
